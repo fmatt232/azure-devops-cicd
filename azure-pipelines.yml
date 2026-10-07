@@ -1,0 +1,36 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  imageName: portfolio-api
+
+stages:
+- stage: Test
+  jobs:
+  - job: UnitTests
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.12'
+    - script: |
+        pip install -r requirements.txt
+        pytest -q
+      displayName: Run unit tests
+
+- stage: Build
+  dependsOn: Test
+  jobs:
+  - job: Container
+    steps:
+    - task: Docker@2
+      inputs:
+        command: buildAndPush
+        repository: $(imageName)
+        dockerfile: Dockerfile
+        containerRegistry: $(containerRegistry)
+        tags: |
+          $(Build.BuildId)
+          latest
